@@ -1,20 +1,23 @@
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 from common.config import embedding_model
-import ollama
+# import ollama
+from ollama import Client
 
 
 
 
 class Embedder:
     def __init__(self, model=embedding_model.trans_model):
-        self.model = SentenceTransformer(model)
-        # self.model =embedding_model.ollama_model
+        # self.model = SentenceTransformer(model)
+        self.client = Client(host=embedding_model.model_host)
+        self.model =embedding_model.ollama_model
     def single_encode(self, text):
-        # response = ollama.embed(
-        #     model=self.model,
-        #     input=text
-        # )
-        return self.model.encode(text)
+        response = self,client.embed(
+            model=self.model,
+            input=text
+        )
+        # response = self.model.encode(text)
+        return response
     def encode(self, jobs):
         results =[]
         for job in jobs:

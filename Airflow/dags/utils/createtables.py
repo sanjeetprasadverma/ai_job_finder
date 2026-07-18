@@ -1,6 +1,7 @@
 from common.db import dbconnector
 from .logger import logger
 from common.config import schema_table_setting
+
 def create_table():
     try:
         PRESTG_SCHEMANAME=schema_table_setting.PRESTG_SCHEMANAME
@@ -16,6 +17,7 @@ def create_table():
         
         with dbconnector.connect_Postgres() as conn:
             cursor = conn.cursor()
+            
             sql = f"""
             CREATE SCHEMA IF NOT EXISTS {PRESTG_SCHEMANAME}
             """
@@ -113,6 +115,7 @@ def create_table():
         
         with dbconnector.connect_vectordb() as conn:
             cursor = conn.cursor()
+            
             sql = f"""
             CREATE SCHEMA IF NOT EXISTS {VECTOR_SCHEMANAME}
             """

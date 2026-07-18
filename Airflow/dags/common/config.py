@@ -30,6 +30,7 @@ class PGVECTOR_SETTINGS:
 class EMBEDDING_MODEL:
     trans_model ="all-MiniLM-L6-v2"
     ollama_model ="nomic-embed-text"
+    model_host = get_env("EMBEDDING_MODEL_HOST")
     
 class SCHEMA_TABLE_SETTINGS:
     PRESTG_SCHEMANAME='PRESTG'

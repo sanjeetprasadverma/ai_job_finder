@@ -1,0 +1,76 @@
+
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11111:11434"
+    volumes:
+      - .ollama:/root/.ollama
+    
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    volumes:
+      - .ollama_data:/root/.ollama
+    entrypoint: >
+      sh -c "ollama pull nomic-embed-text"
+    # environment:
+    #   - OLLAMA_HOST=http://ollama:11434
+  postgres:
+      image: postgres
+      container_name: postgresjob
+      volumes:
+            - ./postgresnew:/var/lib/postgresql/data
+      environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=ragdb
+      ports:
+            - "5411:5432"
+      # restart: always
+      networks:
+          - job-network
+  pgvector:
+      image: ankane/pgvector
+      container_name: pgvectorjob
+      volumes:
+          - ./pgvector:/var/lib/postgresql/data
+      environment:
+          - POSTGRES_USER=postgres
+          - POSTGRES_PASSWORD=postgres
+          - POSTGRES_DB=postgres
+      ports:
+          - "5412:5432"
+      # restart: always
+      networks:
+          - job-network
+  airflow:
+    build: 
+      context: ./airflow
+      dockerfile: Dockerfile
+    container_name: job-airflow
+    env_file:
+      - .env
+    environment:
+      - AIRFLOW_HOME=/opt/airflow
+      - PYTHONPATH=/opt/airflow/src
+      - AIRFLOW__CORE__AUTH_MANAGER=airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
+      - AIRFLOW__SIMPLE_AUTH_MANAGER__USERS=newadmin:adminpassword123
+    volumes:
+      - ./Airflow/dags:/opt/airflow/dags
+      - ./Airflow/logs:/opt/airflow/logs
+      - ./Airflow/plugins:/opt/airflow/plugins
+      # - ./src:/opt/airflow/src
+    ports:
+      - "8081:8080"
+    depends_on:
+      - ollama
+    networks:
+      - job-network
+
+networks:
+  job-network:
+    driver: bridge
