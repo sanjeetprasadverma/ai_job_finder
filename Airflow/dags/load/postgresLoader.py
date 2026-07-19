@@ -26,5 +26,7 @@ class LoadPostgres:
                 cursor.executemany(sql, jobs)
                 conn.commit()
                 cursor.close()
+            return True
         except Exception as e:
             logger.error(f"Failed to load prestg {e}")
+            return False

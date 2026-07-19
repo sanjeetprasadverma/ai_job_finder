@@ -2,4 +2,5 @@ pydantic
 requests
 python-dotenv
 psycopg2-binary
+ollama
 # sentence-transformers

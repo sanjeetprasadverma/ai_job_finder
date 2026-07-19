@@ -1,6 +1,11 @@
 from common.db import dbconnector
 from .logger import logger
 from common.config import schema_table_setting
+from .embedder import embedder
+
+def get_embedding_dimension():
+    test_embedding = embedder.embed("dimension check")
+    return len(test_embedding)
 
 def create_table():
     try:
@@ -126,15 +131,19 @@ def create_table():
                 CREATE TABLE IF NOT EXISTS {VECTOR_SCHEMANAME}.{VECTOR_TABLENAME} (
                     jobid TEXT,
                     title TEXT,
-                    embedding VECTOR(384) 
+                    embedding VECTOR({get_embedding_dimension()}) 
                 )"""
             cursor.execute(sql)
-            sql =f"""CREATE INDEX ON {VECTOR_SCHEMANAME}.{VECTOR_TABLENAME}
-                USING ivfflat (embedding vector_cosine_ops)
-                WITH (lists = 100)"""
+            sql = f"""
+            CREATE INDEX IF NOT EXISTS {VECTOR_TABLENAME}_embedding_idx
+            ON {VECTOR_SCHEMANAME}.{VECTOR_TABLENAME}
+            USING ivfflat (embedding vector_cosine_ops)
+            WITH (lists = 100)
+            """
             cursor.execute(sql)
             conn.commit()
             cursor.close()
         logger.info("vector table creation completed")
+
     except Exception  as e:
         logger.error(f"failed to create the table {e}")

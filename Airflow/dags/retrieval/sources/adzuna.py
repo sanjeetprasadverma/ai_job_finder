@@ -8,6 +8,7 @@ from common.config import adzuna_setting
 from utils.logger import logger
 from utils.common import get_hash
 from utils.models import Job
+from load.loader import Loader # retriving all at once taking time for currently loading one by one
 
 
 
@@ -59,6 +60,7 @@ class Adzuna:
         "max_days_old": adzuna_setting.MAX_DAYS_OLD,
         "results_per_page": adzuna_setting.RESULTS_PER_PAGE
     }
+        self.loadder = Loader()
     
     def fetch_single_page(self, uri):
         res = r.get(uri, params=self.params, timeout=(5, 30))
@@ -77,10 +79,16 @@ class Adzuna:
                 if not jobs:
                     logger(f"No more jobs at page {page}")
                     break
+                page_result=[]
                 for job in jobs:
-                    results.append(self.map_adzuna_job(job))
+                    mapped_job = self.map_adzuna_job(job)
+                    # results.append(mapped_job)
+                    page_result.append(mapped_job.model_dump())
+                self.loadder.load(page_result)
                 page+=1
-                break
+                # forced break
+                # if page==100:
+                #     break
             logger.info("Fetch completed from Adzuna")
             return [job.model_dump() for job in results]
         except Exception as e:
