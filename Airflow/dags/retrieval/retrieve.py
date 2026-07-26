@@ -1,5 +1,5 @@
 from .sources.adzuna import Adzuna
-from utils.logger import logger
+from common.logger import airflow_logger as logger
 
 class Retrieve():
     def __init__(self):

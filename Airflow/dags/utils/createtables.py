@@ -1,7 +1,7 @@
 from common.db import dbconnector
-from .logger import logger
+from common.logger import logger
 from common.config import schema_table_setting
-from .embedder import embedder
+from common.embedder import embedder
 
 def get_embedding_dimension():
     test_embedding = embedder.embed("dimension check")
@@ -131,6 +131,7 @@ def create_table():
                 CREATE TABLE IF NOT EXISTS {VECTOR_SCHEMANAME}.{VECTOR_TABLENAME} (
                     jobid TEXT,
                     title TEXT,
+                    posted_date TIMESTAMP,
                     embedding VECTOR({get_embedding_dimension()}) 
                 )"""
             cursor.execute(sql)

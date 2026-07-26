@@ -1,5 +1,5 @@
 from common.db import dbconnector
-from utils.logger import logger
+from common.logger import airflow_logger as logger
 from common.config import schema_table_setting
 
 class LoadSTGPostgres:

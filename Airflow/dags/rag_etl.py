@@ -1,7 +1,7 @@
 from retrieval.retrieve import retriever
 from load.loader import Loader
 from utils.createtables import create_table
-from utils.logger import logger
+from common.logger import airflow_logger as logger
 from load.log import insert_log
 from common.config import schema_table_setting
 

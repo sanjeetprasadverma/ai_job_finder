@@ -1,8 +1,8 @@
-from utils.embedder import embedder
+from common.embedder import embedder
 from psycopg2.extras import execute_values
 from common.config import schema_table_setting
 from common.db import dbconnector
-from utils.logger import logger
+from common.logger import airflow_logger as logger
 
 class LoadVector:
     def __init__(self):
@@ -22,7 +22,7 @@ class LoadVector:
                 cur = conn.cursor()
                 # Fetch latest records that are not embedded yet
                 cur.execute(f"""
-                    SELECT id, title, description
+                    SELECT id, title, posted_date, description
                     FROM {self.stg_schema}.{self.stg_table}
                     WHERE createdon > (SELECT COALESCE(
                         MAX(starttime) - INTERVAL '5 minutes',
@@ -41,13 +41,14 @@ class LoadVector:
                 # vector_data = []
 
                 for row in rows:
-                    doc_id, title, description = row
+                    doc_id, title,posted_date, description = row
                     vector = embedder.embed(description)
 
                     vector_data = [(
                         (
                             doc_id,
                             title,
+                            posted_date,
                             vector
                         )
                     )]
@@ -69,7 +70,7 @@ class LoadVector:
                     cursor,
                     f"""
                     INSERT INTO {self.vectorSchema}.{self.vectorTable}
-                    (jobid, title, embedding)
+                    (jobid, title, posted_date, embedding)
                     VALUES %s
                     """,
                     vector_data

@@ -86,6 +86,22 @@ services:
       - postgres
     networks:
       - job-network
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: job-backend
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+      - ./common:/app/common
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - job-network
 
 networks:
   job-network:

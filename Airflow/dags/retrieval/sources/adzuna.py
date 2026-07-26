@@ -5,7 +5,7 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from common.config import adzuna_setting
-from utils.logger import logger
+from common.logger import airflow_logger as logger
 from utils.common import get_hash
 from utils.models import Job
 from load.loader import Loader # retriving all at once taking time for currently loading one by one
