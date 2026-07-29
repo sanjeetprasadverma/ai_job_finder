@@ -1,7 +1,8 @@
 # app/routes/user_routes.py
 from fastapi import APIRouter
 from utils import Response, UserQuery
-from controller.apis import get_jobs
+from controller.apis import get_jobs, telegram_webhook
+from fastapi import Request
 
 router = APIRouter()
 
@@ -13,3 +14,7 @@ def create():
 def fetch_jobs(search, page=1, limit = 10, distance=0.9):
     # page=1, pagesize = 10, distance=0.4
     return get_jobs(search, page, limit, distance)
+@router.post("/jobs/webhook")
+async def fetch_telegram_jobs(request: Request):
+    # page=1, pagesize = 10, distance=0.4
+    return await  telegram_webhook(request)

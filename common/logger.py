@@ -1,5 +1,6 @@
 import logging
 import sys
+from pathlib import Path
 
 class Loger:
     def __init__(
@@ -15,7 +16,7 @@ class Loger:
             self.logger.handlers.clear()
 
         # Create log directory if needed
-        # Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
 
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(filename)s - %(levelname)s - %(message)s"
