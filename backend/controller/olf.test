@@ -14,22 +14,7 @@ TELEGRAM_TOKEN= os.getenv("TELEGRAM_TOKEN","")
 user_search_cache = {}
 
 
-HELP_TEXT = (
-    "🤖 *Job Finder Bot*\n\n"
-    "Just type what kind of job you're looking for, and I'll search for matching postings.\n\n"
-    "*Examples:*\n"
-    "• `python developer remote`\n"
-    "• `data analyst bangalore`\n"
-    "• `senior react engineer`\n\n"
-    "I'll show you one job at a time as a card — use the *◀ Prev* / *Next ▶* buttons "
-    "below each result to page through matches.\n\n"
-    "*Commands:*\n"
-    "/start – show this welcome message\n"
-    "/help – show usage instructions"
-)
-
-
-
+    
 async def telegram_webhook(request: Request):
     data = await request.json()
 
@@ -40,13 +25,12 @@ async def telegram_webhook(request: Request):
 
     return {"status": "ok"}
 
+
 async def handle_message(message):
     chat_id = message["chat"]["id"]
-    text = message.get("text", "").strip()
+    text = message["text"]
 
-    if text.startswith("/"):
-        await handle_command(chat_id, text)
-        return
+    print("User:", text)
     user_search_cache[chat_id] = text  # remember this search for pagination
 
     result = await run_in_threadpool(get_jobs, text, 1)
@@ -55,17 +39,6 @@ async def handle_message(message):
 
     await send_message(chat_id, reply_text, keyboard)
 
-
-async def handle_command(chat_id, text):
-    command = text.split()[0].lower().lstrip("/").split("@")[0]  # strips args and @BotName
-
-    if command in ("start", "help"):
-        await send_message(chat_id, HELP_TEXT)
-    else:
-        await send_message(
-            chat_id,
-            "Unknown command. Type /help to see how to use this bot."
-        )
 
 async def handle_callback(callback):
     chat_id = callback["message"]["chat"]["id"]
