@@ -1,0 +1,5 @@
+mcp[cli]
+psycopg2-binary
+ollama
+requests
+uv

@@ -140,3 +140,24 @@
 #     if text:
 #         payload["text"] = text
 #     requests.post(url, json=payload)
+
+
+
+
+# import asyncio
+# from mcp.client import Client
+
+# async def main():
+#     client = Client("server.py")
+
+#     tools = await client.list_tools()
+#     print("Tools:", tools)
+
+#     result = await client.call_tool(
+#         "search_jobs",
+#         {"query": "AI engineer"}
+#     )
+
+#     print("Result:", result)
+
+# asyncio.run(main())

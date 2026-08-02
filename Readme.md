@@ -78,7 +78,7 @@ ai_job_finder/
 
 5. **Expose your backend publicly and register the Telegram webhook:**
    ```bash
-   curl "https://api.telegram.org/bot<TELEGRAM_TOKEN>/setWebhook?url=https://your-public-url.com/api/jobs/webhook"
+   curl "https://api.telegram.org/bot<TELEGRAM_TOKEN>/setWebhook?url=https://your-public-url.com/api/jobs"
    ```
    Verify it's set correctly:
    ```bash
@@ -93,7 +93,7 @@ ai_job_finder/
 |---|---|---|
 | `/api/healthz` | GET | Health check |
 | `/api/jobs` | GET | Search jobs directly via query params (`search`, `page`, `limit`, `distance`) |
-| `/api/jobs/webhook` | POST | Telegram webhook endpoint — receives messages and callback queries from Telegram |
+| `/api/jobs` | POST | Telegram webhook endpoint — receives messages and callback queries from Telegram |
 
 ## Roadmap / notes
 

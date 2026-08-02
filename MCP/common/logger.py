@@ -66,3 +66,4 @@ mcp_logger = Loger(
     log_file='logs/mcp.log',
     level=logging.INFO
 ).get_logger()
+

@@ -7,6 +7,7 @@ from fastapi import Request
 import requests
 import os
 from dotenv import load_dotenv
+from .agent_client import run_agent
 from common.logger import backend_logger
 load_dotenv()
 # import traceback
@@ -143,51 +144,61 @@ def format_reply(result: dict) -> str:
 
     return "\n\n".join(lines)
 
-def get_jobs(params, page=1, pagesize = 10, distance=0.4):
+import traceback
+async def get_jobs(params, page=1, pagesize = 10, distance=0.4):
     try:
-        page= int(page)
-        pagesize=int(pagesize)
-        distance=float(distance)
-        embeded_text = embedder.embed(params)
-        offset = (page - 1) * pagesize
-        with dbconnector.connect_vectordb() as conn:
-            cursor = conn.cursor()
-            sql = f"""
-            SELECT 
-            jobid 
-            ,embedding <-> %s::vector AS distance
-            FROM {schema_table_setting.VECTOR_SCHEMANAME}.{schema_table_setting.VECTOR_TABLENAME} 
-            WHERE embedding <-> %s::vector > %s
-            ORDER BY distance ASC, posted_date DESC
-            LIMIT %s OFFSET %s
-            """
-            cursor.execute(sql, (embeded_text, embeded_text, distance, pagesize, offset))
-            matches = cursor.fetchall()
-            job_ids = [row[0] for row in matches]
-            conn.commit()
-            cursor.close()
-        if(len(job_ids)==0):
-            return {"status":200, "message":"No more jobs found"}
-        with dbconnector.connect_Postgres() as conn:
-            cursor = conn.cursor()
-            placeholders = ",".join(["%s"] * len(job_ids))
-            sql = f"""
-            SELECT *
-            FROM {schema_table_setting.STG_SCHEMANAME}.{schema_table_setting.STG_TABLENAME}
-            WHERE id IN ({placeholders})
-            """
-            cursor.execute(sql, job_ids)
-            jobs = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description]
-
-            result = [
-                dict(zip(columns, row))
-                for row in jobs
-            ]
-
-            conn.commit()
-            cursor.close()
-        return {"status":200, "message":result}
+        # res = await run_in_threadpool(run_agent, params)
+        res = await run_agent(params)
+        return  ({"status":200, "message": res})
     except Exception as e:
-        # traceback.print_exc()
-        return ({"status":500, "message":str(e)})
+        traceback.print_exc()
+        backend_logger.error(f"Error in get_jobs: {repr(e)}")
+        # backend_logger.error(f"Error in get_jobs: {str(e)}")
+        return ({"status":500, "message":f"Something went wrong while fetching jobs. Please try again later"})
+    # try:
+    #     page= int(page)
+    #     pagesize=int(pagesize)
+    #     distance=float(distance)
+    #     embeded_text = embedder.embed(params)
+    #     offset = (page - 1) * pagesize
+    #     with dbconnector.connect_vectordb() as conn:
+    #         cursor = conn.cursor()
+    #         sql = f"""
+    #         SELECT 
+    #         jobid 
+    #         ,embedding <-> %s::vector AS distance
+    #         FROM {schema_table_setting.VECTOR_SCHEMANAME}.{schema_table_setting.VECTOR_TABLENAME} 
+    #         WHERE embedding <-> %s::vector > %s
+    #         ORDER BY distance ASC, posted_date DESC
+    #         LIMIT %s OFFSET %s
+    #         """
+    #         cursor.execute(sql, (embeded_text, embeded_text, distance, pagesize, offset))
+    #         matches = cursor.fetchall()
+    #         job_ids = [row[0] for row in matches]
+    #         conn.commit()
+    #         cursor.close()
+    #     if(len(job_ids)==0):
+    #         return {"status":200, "message":"No more jobs found"}
+    #     with dbconnector.connect_Postgres() as conn:
+    #         cursor = conn.cursor()
+    #         placeholders = ",".join(["%s"] * len(job_ids))
+    #         sql = f"""
+    #         SELECT *
+    #         FROM {schema_table_setting.STG_SCHEMANAME}.{schema_table_setting.STG_TABLENAME}
+    #         WHERE id IN ({placeholders})
+    #         """
+    #         cursor.execute(sql, job_ids)
+    #         jobs = cursor.fetchall()
+    #         columns = [desc[0] for desc in cursor.description]
+
+    #         result = [
+    #             dict(zip(columns, row))
+    #             for row in jobs
+    #         ]
+
+    #         conn.commit()
+    #         cursor.close()
+    #     return {"status":200, "message":result}
+    # except Exception as e:
+    #     # traceback.print_exc()
+    #     return ({"status":500, "message":str(e)})
