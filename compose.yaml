@@ -46,7 +46,7 @@ services:
     #     ollama pull nomic-embed-text
     #   "
     entrypoint: >
-      sh -c "ollama pull qwen3"
+      sh -c "ollama pull qwen3:1.7b"
     environment:
       - OLLAMA_HOST=http://ollama:11434
     networks:

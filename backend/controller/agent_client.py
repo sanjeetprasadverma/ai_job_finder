@@ -4,12 +4,16 @@ from contextlib import AsyncExitStack
 from ollama import AsyncClient
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+import asyncio
+from common.logger import backend_logger
 
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:latest")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:1.7b")
+# OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:0.5b")
 
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://job-mcp:8000/mcp")
 
 ollama_client = AsyncClient( host="http://ollama:11434")
+
 
 SYSTEM_PROMPT = (
     "You help users find job postings. When the user describes what they're "
@@ -18,6 +22,24 @@ SYSTEM_PROMPT = (
     "matches. If no jobs are found, say so plainly and suggest broadening the search."
 )
 
+# SYSTEM_PROMPT = """
+# You are a job search assistant.
+
+# IMPORTANT RULE:
+# You MUST ALWAYS call the search_jobs tool before answering any job search request.
+
+# Never invent job listings.
+# Never provide example jobs.
+# Only answer using data returned from search_jobs.
+
+# Workflow:
+# 1. User asks for jobs.
+# 2. Call search_jobs.
+# 3. Read the results.
+# 4. Summarize the returned jobs.
+
+# If the tool returns no jobs, say no jobs were found.
+# """
 
 def _mcp_tool_to_ollama_schema(tool):
     """Convert an MCP tool definition into the shape Ollama's chat() expects."""
@@ -39,19 +61,14 @@ async def run_agent(user_text: str) -> str:
     fine for typical Telegram bot traffic. If you need lower latency under heavy
     load, keep a long-lived ClientSession instead of reconnecting every message.
     """
-    print("1. Starting agent")
     async with AsyncExitStack() as stack:
-        print("2. Connecting MCP")
         read, write = await stack.enter_async_context(
             streamable_http_client(MCP_SERVER_URL)
         )
-        print("3. MCP transport connected")
         session = await stack.enter_async_context(ClientSession(read, write))
         await session.initialize()
-        print("4. MCP initialized")
         
         tools_result = await session.list_tools()
-        print("5. Received tools")
         print(tools_result.tools)
         tools = [_mcp_tool_to_ollama_schema(t) for t in tools_result.tools]
 
@@ -59,18 +76,24 @@ async def run_agent(user_text: str) -> str:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_text},
         ]
-        print("6. Sending request to Ollama")
         response = await ollama_client.chat(
             model=OLLAMA_MODEL,
             messages=messages,
             tools=tools,
+    #         options={
+    #     "temperature": 0,
+    # },
         )
-        print("8. Ollama responded")
         print(response.message)
         messages.append(response.message)
 
         # Keep looping while the model wants to call tools
+        tool_round=0
         while response.message.tool_calls:
+            tool_round += 1
+            if tool_round > 5:  # Prevent infinite loops
+                backend_logger.warning("Too many tool calls, stopping.")
+                break
             for call in response.message.tool_calls:
                 result = await session.call_tool(call.function.name, call.function.arguments)
                 result_text = "".join(
